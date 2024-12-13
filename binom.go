@@ -8,6 +8,10 @@ import (
 
 // Binomial(n, k) == ‹(n k), false›.
 // Unless the result overflows uint64, in which case it returns ‹0, true›.
+//
+// This is a generic iterative algorithm using `math/bits` multiplication to
+// detect overflow (and to allow the internal operations to slightly exceed
+// uint64 in some cases).
 func Binomial[V constraints.Unsigned](n, k V) (uint64, bool) {
 	if k > n {
 		return 0, false

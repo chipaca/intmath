@@ -13,3 +13,15 @@ about it. Your choice!
 [intmath]: https://github.com/chipaca/intmath
 [package documentation]: https://pkg.go.dev/chipaca.com/intmath
 [rambly blogpost]: https://chipaca.com/en/2024/01/integer-math/
+
+---
+
+In the tests, you'll find
+
+* "basic" tests that sanity check form a handful of values, comparing
+  the result to known values.
+* "quick" tests (using testing/quick) that compare the result with
+  slower, assumed-correct implementations.  Some of these are _not_
+  quick, despite the name; if you run the tests without `-short`
+  you'll probably need to add a bigger `-timeout`.
+* benchmarks that compare the functions to the slower versions.

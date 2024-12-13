@@ -13,6 +13,9 @@ import (
 )
 
 func TestLog10Basic(t *testing.T) {
+	// just check it doesn't panic
+	_ = intmath.FloorLog10(uint64(0))
+	_ = intmath.CeilLog10(uint64(0))
 	for i, n := uint64(0), uint64(1); n < math.MaxUint64/10; i, n = i+1, n*10 {
 		log := intmath.FloorLog10(n)
 		if log != i {
@@ -26,6 +29,9 @@ func TestLog10Basic(t *testing.T) {
 }
 
 func TestLog2Basic(t *testing.T) {
+	// just check it doesn't panic
+	_ = intmath.FloorLog2(uint64(0))
+	_ = intmath.CeilLog2(uint64(0))
 	for i, n := uint64(0), uint64(1); n < math.MaxUint64/10; i, n = i+1, n*2 {
 		log := intmath.FloorLog2(n)
 		if log != i {

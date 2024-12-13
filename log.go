@@ -19,18 +19,12 @@ var log2table = [...]uint64{
 
 // FloorLog10(u) returns ⌊log₂u⌋
 //
-// If u is 0, anything might happen 🤷
+// If u is 0, you'll get a nonsense result.
+//
+// This algorithm is from “Find the log base 2 of an N-bit integer in O(lg(N))
+// operations with multiply and lookup” from Sean Eron Anderson's “Bit Twiddling
+// Hacks”
 func FloorLog2[V constraints.Unsigned](u V) V {
-	// this is from “Find the log base 2 of an N-bit integer in O(lg(N))
-	// operations with multiply and lookup” from Sean Eron Anderson's “Bit
-	// Twiddling Hacks” where he says that
-	//    Eric Cole devised this January 8, 2006 after reading about the
-	//    entry below to round up to a power of 2 and the method below for
-	//    computing the number of trailing bits with a multiply and lookup
-	//    using a DeBruijn sequence. On December 10, 2009, Mark Dickinson
-	//    shaved off a couple operations by requiring v be rounded up to one
-	//    less than the next power of 2 rather than the power of 2.
-
 	u |= u >> 1
 	u |= u >> 2
 	u |= u >> 4
@@ -43,7 +37,9 @@ func FloorLog2[V constraints.Unsigned](u V) V {
 
 // CeilLog2(u) returns ⌈log₂u⌉.
 //
-// If u is 0, anything might happen 🤷
+// If u is 0, you'll get a nonsense result.
+//
+// This one cheats, as ⌈log₂u⌉ is just `math/bits.Len64(u-1)`.
 func CeilLog2[V constraints.Unsigned](u V) V {
 	// when type switches on parametric types are done, use that
 	// to call the potentially-cheaper functions from bits when
@@ -80,6 +76,8 @@ var log10table = [65]struct {
 }
 
 // Len(n) returns the length of the base-10 string of n.
+//
+// Len(u) is essentially ⌊log₁₀u⌋+1.
 func Len[V constraints.Integer](n V) V {
 	var sgn uint64
 	var v uint64
@@ -87,30 +85,45 @@ func Len[V constraints.Integer](n V) V {
 		sgn = 1
 		x := int64(n)
 		if x == math.MinInt64 {
+			// -x won't work for this one number
 			return 20
 		}
 		v = uint64(-x)
 	} else {
 		v = uint64(n)
 	}
+	return V(floorLog10PlusOne(v) + sgn)
+}
+
+// FloorLog10(u) returns ⌊log₁₀u⌋
+//
+// If u is 0, you'll get a nonsense result.
+//
+// This starts from Sean Eron Anderson's “Bit Twiddling Hacks” entry on “Find
+// integer log base 10 of an integer”, but combines that with the fact that
+// ⌈log₂u⌉ is just `math/bits.Len64(u-1)` and that in most places that's a
+// hardware instruction. There are some pesky offsets that need to be tracked in
+// a table.
+func FloorLog10[V constraints.Unsigned](u V) V {
+	return V(floorLog10PlusOne(uint64(u)) - 1)
+}
+
+// a helper for both FloorLog10 and Len
+func floorLog10PlusOne(v uint64) uint64 {
 	x := log10table[bits.Len64(v)]
 	var d uint64
 	if x.off > v {
 		d = 1
 	}
-	return V(x.log - d + sgn)
-}
-
-// FloorLog10(u) returns ⌊log₁₀u⌋
-//
-// If u is 0, anything might happen 🤷
-func FloorLog10[V constraints.Unsigned](u V) V {
-	return Len(u) - 1
+	return x.log - d
 }
 
 // CeilLog10(u) returns ⌈log₁₀u⌉.
 //
-// If u is 0, anything might happen 🤷
+// If u is 0, you'll get a nonsense result.
+//
+// This is almost exactly the same as `FloorLog10`. The difference is a single
+// `>=` instead of a `>` when deciding whether an offset is needed.
 func CeilLog10[V constraints.Unsigned](u V) V {
 	v := uint64(u)
 	x := log10table[bits.Len64(v)]

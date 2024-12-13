@@ -7,8 +7,9 @@ import (
 )
 
 // Pow(m, n) == mⁿ
+//
+// from TAOCPv2, §4.6.3 (p462 in the 3rd edition)
 func Pow[V constraints.Unsigned](m, n V) V {
-	// from TAOCPv2, §4.6.3 (p462 in the 3rd edition)
 	pow := V(1)
 
 	for n > 0 {
@@ -23,11 +24,12 @@ func Pow[V constraints.Unsigned](m, n V) V {
 
 // PowX(m, n) == ‹mⁿ, false› as long as it fits in a uint64. As soon
 // as it overflows it returns ‹0, true›.
+//
+// from TAOCPv2, §4.6.3 (p462 in the 3rd edition)
 func PowX[V constraints.Unsigned](m, n V) (pow uint64, overflowed bool) {
 	// I'm still not convinced about returning uint64 instead of V here
 	// but the overflow detection would be a bit more expensive and that ends up deciding it for now
 
-	// from TAOCPv2, §4.6.3 (p462 in the 3rd edition)
 	pow = uint64(1)
 	var overflow uint64
 	mu := uint64(m)
