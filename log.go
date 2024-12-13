@@ -1,6 +1,7 @@
 package intmath
 
 import (
+	"math"
 	"math/bits"
 
 	"golang.org/x/exp/constraints"
@@ -78,15 +79,26 @@ var log10table = [65]struct {
 	{log: 20, off: 10000000000000000000},
 }
 
-// Len(u) returns the length of the base-10 string of u.
-func Len[V constraints.Unsigned](u V) V {
-	v := uint64(u)
+// Len(n) returns the length of the base-10 string of n.
+func Len[V constraints.Integer](n V) V {
+	var sgn uint64
+	var v uint64
+	if n < 0 {
+		sgn = 1
+		x := int64(n)
+		if x == math.MinInt64 {
+			return 20
+		}
+		v = uint64(-x)
+	} else {
+		v = uint64(n)
+	}
 	x := log10table[bits.Len64(v)]
 	var d uint64
 	if x.off > v {
 		d = 1
 	}
-	return V(x.log - d)
+	return V(x.log - d + sgn)
 }
 
 // FloorLog10(u) returns ⌊log₁₀u⌋

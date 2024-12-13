@@ -1,6 +1,7 @@
 package intmath_test
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"testing"
@@ -73,7 +74,7 @@ func TestCeilLog2Quick(t *testing.T) {
 	}
 }
 
-func testLen(t *testing.T, n uint64, expected uint64, f func(uint64) uint64) {
+func testLen(t *testing.T, n uint64, expected uint64) {
 	l := intmath.Len(n)
 	if l != expected {
 		t.Errorf("Len(%d) should be %d, got %d", n, expected, l)
@@ -82,30 +83,66 @@ func testLen(t *testing.T, n uint64, expected uint64, f func(uint64) uint64) {
 
 func TestLenBasic(t *testing.T) {
 	for i, n := uint64(1), uint64(1); n < math.MaxUint64/10; i, n = i+1, n*10 {
-		testLen(t, n, i, intmath.Len)
+		testLen(t, n, i)
 	}
-	testLen(t, 0x838178adfc68a64f, 19, intmath.Len)
+	testLen(t, 0x838178adfc68a64f, 19)
 }
 
-func lenStrconv[V constraints.Unsigned](n V) V {
+func lenFmt[V constraints.Integer](n V) V {
+	return V(len(fmt.Sprint(n)))
+}
+
+func lenStrconv[V constraints.Integer](n V) V {
+	if V(0)-1 < 0 {
+		return V(len(strconv.FormatInt(int64(n), 10)))
+	}
 	return V(len(strconv.FormatUint(uint64(n), 10)))
 }
 
-func lenMath[V constraints.Unsigned](n V) V {
-	return V(math.Floor(math.Log10(float64(n)))) + 1
+func lenMath[V constraints.Integer](n V) V {
+	extra := V(1)
+	if n < 0 {
+		extra = 2
+		n = -n
+	}
+	return V(math.Floor(math.Log10(float64(n)))) + extra
 }
 
 // this one just checks that lenMath and lenStrconv give reasonable results
 func TesOtherLenQuick(t *testing.T) {
+	if err := quick.CheckEqual(lenStrconv[int32], intmath.Len[int32], nil); err != nil {
+		t.Error(err)
+	}
+	if err := quick.CheckEqual(lenMath[int32], intmath.Len[int32], nil); err != nil {
+		t.Error(err)
+	}
+	if err := quick.CheckEqual(lenFmt[int32], intmath.Len[int32], nil); err != nil {
+		t.Error(err)
+	}
 	if err := quick.CheckEqual(lenStrconv[uint32], intmath.Len[uint32], nil); err != nil {
 		t.Error(err)
 	}
 	if err := quick.CheckEqual(lenMath[uint32], intmath.Len[uint32], nil); err != nil {
 		t.Error(err)
 	}
+	if err := quick.CheckEqual(lenFmt[uint32], intmath.Len[uint32], nil); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestLenQuick(t *testing.T) {
+	if err := quick.CheckEqual(lenStrconv[int8], intmath.Len[int8], nil); err != nil {
+		t.Error(err)
+	}
+	if err := quick.CheckEqual(lenStrconv[int16], intmath.Len[int16], nil); err != nil {
+		t.Error(err)
+	}
+	if err := quick.CheckEqual(lenStrconv[int32], intmath.Len[int32], nil); err != nil {
+		t.Error(err)
+	}
+	if err := quick.CheckEqual(lenStrconv[int64], intmath.Len[int64], nil); err != nil {
+		t.Error(err)
+	}
 	if err := quick.CheckEqual(lenStrconv[uint8], intmath.Len[uint8], nil); err != nil {
 		t.Error(err)
 	}
@@ -126,9 +163,10 @@ func benchmarkLen(b *testing.B, f func(uint32) uint32) {
 	}
 }
 
+func BenchmarkLenFmt(b *testing.B)     { benchmarkLen(b, lenFmt[uint32]) }
 func BenchmarkLenStrconv(b *testing.B) { benchmarkLen(b, lenStrconv[uint32]) }
 func BenchmarkLenMath(b *testing.B)    { benchmarkLen(b, lenMath[uint32]) }
-func BenchmarkLen(b *testing.B)        { benchmarkLen(b, intmath.Len[uint32]) }
+func BenchmarkLenInt(b *testing.B)     { benchmarkLen(b, intmath.Len[uint32]) }
 
 func BenchmarkLog(b *testing.B) {
 	for name, f := range map[string]func(uint64) uint64{
